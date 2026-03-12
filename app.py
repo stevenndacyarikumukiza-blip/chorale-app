@@ -210,3 +210,4 @@ with selected_tab[6]:
             st.success("Nta baririmbyi bafite absent ≥3 uyu kwezi.")
     except:
         st.warning("attendance.csv ntiyabonetse.")
+
