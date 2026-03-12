@@ -1,24 +1,16 @@
-# app.py
 import streamlit as st
 import pandas as pd
 from datetime import datetime
 
-# ----------------- Page Setup -----------------
 st.set_page_config(page_title="Chorale Inshuti za Yesu", layout="wide")
 st.title("🎵 CHORALE INSHUTI ZA YESU")
 
-# ----------------- Header Tabs -----------------
-tabs = st.columns([1,1,1,1,1,1])
-pages = ["Ahabanza","Abaririmbyi","Attendance","Umusanzu","Raporo Attendance","Raporo Umusanzu"]
-page = None
-for i, tab in enumerate(tabs):
-    if tab.button(pages[i]):
-        page = pages[i]
-
-# Default to home if nothing clicked
-if page is None:
-    page = "Ahabanza"
-
+# ---------------- Header Navigation ----------------
+menu = st.selectbox(
+    "Menu",
+    ["Ahabanza","Abaririmbyi","Attendance","Umusanzu","Raporo Attendance","Raporo Umusanzu","Abatemewe Kuririmba"],
+    index=0
+)
 
 # ---------------- HOME ----------------
 if menu == "Ahabanza":
