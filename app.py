@@ -3,35 +3,29 @@ import pandas as pd
 from datetime import datetime
 
 st.set_page_config(page_title="Chorale Inshuti za Yesu", layout="wide")
-
 st.title("🎵 CHORALE INSHUTI ZA YESU")
 
-tabs = st.tabs([
-"Ahabanza",
-"Abaririmbyi",
-"Attendance",
-"Umusanzu",
-"Raporo Attendance",
-"Raporo Umusanzu",
-"Abatemewe Kuririmba"
-])
+# ---------------- Header Navigation ----------------
+menu = st.selectbox(
+    "Menu",
+    ["Ahabanza","Abaririmbyi","Attendance","Umusanzu","Raporo Attendance","Raporo Umusanzu","Abatemewe Kuririmba"],
+    index=0
+)
 
 # ---------------- HOME ----------------
-with tabs[0]:
-
+if menu == "Ahabanza":
     st.header("Murakaza neza muri Chorale Inshuti za Yesu")
-
-    st.write("Iminsi y’imyitozo:")
-    st.write("• Wednesday")
-    st.write("• Saturday")
-    st.write("• Sunday")
-
+    st.write("Iminsi y’imyitozo: Ku wa Gatatu, Ku wa Gatandatu, Ku Cyumweru")
+    st.subheader("📖 Amateka ya Chorale")
+    st.write("""
+Chorale Inshuti za Yesu ikorera umurimo w’Imana mu itorero rya ADEPR Kinyinya. 
+Yatangiriye mu 2021 abaririmbyi 35 bahurira hamwe na worship team.
+Mu 2022 yatangiye gukora umurimo wo kuramya no guhimbaza Imana mu bitaramo.
+""")
 
 # ---------------- MEMBERS ----------------
-with tabs[1]:
-
+elif menu == "Abaririmbyi":
     st.header("👥 Abaririmbyi")
-
     try:
         df = pd.read_csv("members.csv")
         st.dataframe(df)
@@ -39,133 +33,107 @@ with tabs[1]:
     except:
         st.warning("Nta baririmbyi babonetse.")
 
-
 # ---------------- ATTENDANCE ----------------
-with tabs[2]:
-
+elif menu == "Attendance":
     st.header("📋 Shyira Attendance")
 
-    month = st.selectbox(
-        "📅 Hitamo Ukwezi",
-        ["January","February","March","April","May","June",
-         "July","August","September","October","November","December"]
-    )
-
-    day = st.selectbox(
-        "📆 Hitamo Umunsi",
-        ["Wednesday","Saturday","Sunday"]
-    )
-
-    date = st.date_input("📌 Hitamo Itariki")
-
     try:
-
         members = pd.read_csv("members.csv")
+        if members.empty:
+            st.warning("Nta baririmbyi babonetse.")
+        else:
+            # ---------------- Filters ----------------
+            month = st.selectbox(
+                "📅 Hitamo Ukwezi",
+                ["January","February","March","April","May","June",
+                 "July","August","September","October","November","December"]
+            )
+            day = st.selectbox(
+                "📆 Hitamo Umunsi",
+                ["Wednesday","Saturday","Sunday"]
+            )
+            date_input = st.date_input("📌 Hitamo Itariki", value=datetime.now().date())
 
-        attendance_list = []
+            attendance_list = []
+            total_members = len(members)
+            present_count = 0
+            absent_count = 0
+            uruhushya_count = 0
 
-        present_count = 0
-        absent_count = 0
-        uruhushya_count = 0
+            try:
+                old_attendance = pd.read_csv("attendance.csv")
+            except FileNotFoundError:
+                old_attendance = pd.DataFrame(columns=["Name","Day","Status","Date"])
 
-        total_members = len(members)
+            for i,row in members.iterrows():
+                name = row["Name"]
 
-        date_str = str(date)
+                # Reba absent >=3
+                absent_this_month = old_attendance[
+                    (old_attendance["Name"]==name) &
+                    (pd.to_datetime(old_attendance["Date"], errors="coerce").dt.month == ["January","February","March","April","May","June",
+                                                                                     "July","August","September","October","November","December"].index(month)+1) &
+                    (old_attendance["Status"]=="Absent")
+                ].shape[0]
 
-        try:
-            old = pd.read_csv("attendance.csv")
-        except:
-            old = pd.DataFrame(columns=["Name","Month","Day","Status","Date"])
+                if absent_this_month >=3:
+                    st.write(f"🚫 {name} - Ntibemerewe kuririmba (Absent ≥3 uyu kwezi)")
+                    continue
 
-        for i,row in members.iterrows():
+                col1, col2 = st.columns([3,3])
+                with col1:
+                    st.write("👤", name)
+                with col2:
+                    status = st.radio(
+                        "Status",
+                        ["Present","Absent","Uruhushya"],
+                        key=i,
+                        horizontal=True
+                    )
 
-            name = row["Name"]
+                if status=="Present":
+                    present_count +=1
+                elif status=="Absent":
+                    absent_count +=1
+                else:
+                    uruhushya_count +=1
 
-            absent_this_month = old[
-                (old["Name"]==name) &
-                (old["Month"]==month) &
-                (old["Status"]=="Absent")
-            ].shape[0]
+                attendance_list.append({
+                    "Name":name,
+                    "Day":day,
+                    "Status":status,
+                    "Date":datetime.combine(date_input, datetime.now().time()).strftime("%Y-%m-%d %H:%M:%S")
+                })
 
-            if absent_this_month >= 3:
+            st.divider()
+            col1,col2,col3,col4 = st.columns(4)
+            col1.metric("Abaririmbyi bose", total_members)
+            col2.metric("Bari Present (Bitabiriye)", present_count)
+            col3.metric("Bari Absent (Basibye)", absent_count)
+            col4.metric("Basabye Uruhushya", uruhushya_count)
 
-                st.write(f"🚫 {name} - Ntibemerewe kuririmba (Absent ≥3)")
-                continue
+            if st.button("💾 Save Attendance"):
+                new_data = pd.DataFrame(attendance_list)
+                data = pd.concat([old_attendance,new_data],ignore_index=True)
+                data.to_csv("attendance.csv",index=False)
+                st.success("Attendance yabitswe neza!")
 
-            col1,col2 = st.columns([3,3])
-
-            with col1:
-                st.write("👤", name)
-
-            with col2:
-
-                status = st.radio(
-                    "Status",
-                    ["Present","Absent","Uruhushya"],
-                    key=i,
-                    horizontal=True
-                )
-
-            if status == "Present":
-                present_count += 1
-            elif status == "Absent":
-                absent_count += 1
-            else:
-                uruhushya_count += 1
-
-            attendance_list.append({
-                "Name":name,
-                "Month":month,
-                "Day":day,
-                "Status":status,
-                "Date":date_str
-            })
-
-        st.divider()
-
-        col1,col2,col3,col4 = st.columns(4)
-
-        col1.metric("Abaririmbyi bose", total_members)
-        col2.metric("Bari Present", present_count)
-        col3.metric("Bari Absent", absent_count)
-        col4.metric("Basabye Uruhushya", uruhushya_count)
-
-        if st.button("💾 Save Attendance"):
-
-            new = pd.DataFrame(attendance_list)
-
-            data = pd.concat([old,new], ignore_index=True)
-
-            data.to_csv("attendance.csv", index=False)
-
-            st.success("Attendance yabitswe neza!")
-
-    except:
-
+    except FileNotFoundError:
         st.warning("members.csv ntiyabonetse.")
 
-
 # ---------------- CONTRIBUTION ----------------
-with tabs[3]:
-
+elif menu == "Umusanzu":
     st.header("💰 Umusanzu")
-
     name = st.text_input("Izina")
-
-    contribution_name = st.text_input("Izina ry'umusanzu")
-
+    contribution_name = st.text_input("Izina ry'umusanzu (Urugero: Impuzankano)")
     month = st.selectbox(
         "Ukwezi",
         ["January","February","March","April","May","June",
          "July","August","September","October","November","December"]
     )
-
     amount = st.number_input("Amafaranga", min_value=0)
-
-    today = datetime.now().strftime("%Y-%m-%d")
-
-    if st.button("Save Umusanzu"):
-
+    today = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    if st.button("💾 Save Umusanzu"):
         new = pd.DataFrame({
             "Name":[name],
             "Contribution":[contribution_name],
@@ -173,119 +141,93 @@ with tabs[3]:
             "Amount":[amount],
             "Date":[today]
         })
-
         try:
             old = pd.read_csv("contribution.csv")
-            new = pd.concat([old,new], ignore_index=True)
+            new = pd.concat([old,new],ignore_index=True)
         except:
             pass
-
-        new.to_csv("contribution.csv", index=False)
-
+        new.to_csv("contribution.csv",index=False)
         st.success("Umusanzu wabitswe neza!")
 
-
 # ---------------- RAPORO ATTENDANCE ----------------
-with tabs[4]:
-
+elif menu == "Raporo Attendance":
     st.header("📊 Raporo ya Attendance")
-
     try:
-
         attendance = pd.read_csv("attendance.csv")
+        if attendance.empty:
+            st.info("Nta data ya attendance yabonetse.")
+        else:
+            attendance["Date"] = pd.to_datetime(attendance["Date"], errors="coerce")
 
-        month = st.selectbox(
-            "Hitamo Ukwezi",
-            ["All","January","February","March","April","May","June",
-             "July","August","September","October","November","December"]
-        )
+            month_filter = st.selectbox("Hitamo Ukwezi", ["All","January","February","March","April","May","June",
+                                                         "July","August","September","October","November","December"])
+            day_filter = st.selectbox("Hitamo Umunsi", ["All","Wednesday","Saturday","Sunday"])
+            date_filter = st.date_input("Hitamo Itariki", value=None)
 
-        day = st.selectbox(
-            "Hitamo Umunsi",
-            ["All","Wednesday","Saturday","Sunday"]
-        )
+            filtered = attendance.copy()
 
-        date = st.date_input("Hitamo Itariki")
+            if month_filter != "All":
+                month_number = ["January","February","March","April","May","June",
+                                "July","August","September","October","November","December"].index(month_filter)+1
+                filtered = filtered[filtered["Date"].dt.month == month_number]
+            if day_filter != "All":
+                filtered = filtered[filtered["Day"]==day_filter]
+            if date_filter:
+                filtered = filtered[filtered["Date"].dt.date == date_filter]
 
-        filtered = attendance.copy()
-
-        if month != "All":
-            filtered = filtered[filtered["Month"] == month]
-
-        if day != "All":
-            filtered = filtered[filtered["Day"] == day]
-
-        filtered = filtered[filtered["Date"] == str(date)]
-
-        st.dataframe(filtered)
-
-        st.subheader("Summary")
-
-        summary = filtered.groupby("Status").size()
-
-        st.write(summary)
-
-    except:
-
-        st.warning("attendance.csv ntiyabonetse.")
-
-
-# ---------------- RAPORO CONTRIBUTION ----------------
-with tabs[5]:
-
-    st.header("📊 Raporo y'Umusanzu")
-
-    try:
-
-        df = pd.read_csv("contribution.csv")
-
-        contribution_name = st.text_input("Andika Izina ry'umusanzu ushaka kureba")
-
-        if contribution_name:
-
-            filtered = df[df["Contribution"] == contribution_name]
-
+            st.subheader("Attendance y'igihe wahisemo")
             st.dataframe(filtered)
 
-            st.metric("Total", filtered["Amount"].sum())
+            summary = filtered.groupby("Status").size()
+            st.subheader("Summary")
+            st.write(summary)
 
+    except FileNotFoundError:
+        st.warning("attendance.csv ntiyabonetse.")
+
+# ---------------- RAPORO CONTRIBUTION ----------------
+elif menu == "Raporo Umusanzu":
+    st.header("📊 Raporo y'Umusanzu")
+    try:
+        df = pd.read_csv("contribution.csv")
+        if df.empty:
+            st.info("Nta musanzu wabonetse.")
         else:
+            df["Date"] = pd.to_datetime(df["Date"], errors="coerce")
+            month_filter = st.selectbox("Hitamo Ukwezi", ["All","January","February","March","April","May","June",
+                                                          "July","August","September","October","November","December"])
+            contribution_filter = st.text_input("Hitamo Umusanzu (Urugero: Impuzankano)")
+            filtered = df.copy()
+            if month_filter != "All":
+                month_number = ["January","February","March","April","May","June",
+                                "July","August","September","October","November","December"].index(month_filter)+1
+                filtered = filtered[df["Date"].dt.month == month_number]
+            if contribution_filter:
+                filtered = filtered[df["Contribution"]==contribution_filter]
 
-            st.dataframe(df)
+            st.subheader("Raporo y'Umusanzu")
+            st.dataframe(filtered)
+            total = filtered["Amount"].sum()
+            st.metric("Umusanzu wose", total)
 
-    except:
-
+    except FileNotFoundError:
         st.warning("contribution.csv ntiyabonetse.")
 
-
-# ---------------- DISCIPLINE ----------------
-with tabs[6]:
-
+# ---------------- ABATEMEWE KURIRIMBA ----------------
+elif menu == "Abatemewe Kuririmba":
     st.header("🚫 Abatemewe Kuririmba")
-
     try:
-
         attendance = pd.read_csv("attendance.csv")
-
-        month = datetime.now().strftime("%B")
-
-        absent = attendance[
-            (attendance["Month"] == month) &
-            (attendance["Status"] == "Absent")
-        ]
-
-        banned = absent.groupby("Name").size().reset_index(name="Absent")
-
-        banned = banned[banned["Absent"] >= 3]
-
-        if banned.empty:
-
-            st.success("Nta muntu utemewe kuririmba.")
-
+        attendance["Date"] = pd.to_datetime(attendance["Date"], errors="coerce")
+        current_month = datetime.now().month
+        absent_counts = attendance[
+            (attendance["Date"].dt.month == current_month) & 
+            (attendance["Status"]=="Absent")
+        ].groupby("Name").size()
+        not_allowed = absent_counts[absent_counts >= 3]
+        if not_allowed.empty:
+            st.success("Nta baririmbyi bafite absent ≥3 uyu kwezi.")
         else:
-
-            st.dataframe(banned)
-
-    except:
-
+            st.dataframe(not_allowed)
+    except FileNotFoundError:
         st.warning("attendance.csv ntiyabonetse.")
