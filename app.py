@@ -34,11 +34,8 @@ with tabs[1]:
 
     try:
         df = pd.read_csv("members.csv")
-
         st.dataframe(df)
-
         st.info(f"Umubare w'Abaririmbyi: {len(df)}")
-
     except:
         st.warning("Nta baririmbyi babonetse.")
 
@@ -48,10 +45,18 @@ with tabs[2]:
 
     st.header("📋 Shyira Attendance")
 
+    month = st.selectbox(
+        "📅 Hitamo Ukwezi",
+        ["January","February","March","April","May","June",
+         "July","August","September","October","November","December"]
+    )
+
     day = st.selectbox(
-        "📅 Hitamo Umunsi w’Imyitozo",
+        "📆 Hitamo Umunsi",
         ["Wednesday","Saturday","Sunday"]
     )
+
+    date = st.date_input("📌 Hitamo Itariki")
 
     try:
 
@@ -65,14 +70,12 @@ with tabs[2]:
 
         total_members = len(members)
 
-        today = datetime.now()
-        current_month = today.month
-        date_str = today.strftime("%Y-%m-%d %H:%M:%S")
+        date_str = str(date)
 
         try:
             old = pd.read_csv("attendance.csv")
         except:
-            old = pd.DataFrame(columns=["Name","Day","Status","Date"])
+            old = pd.DataFrame(columns=["Name","Month","Day","Status","Date"])
 
         for i,row in members.iterrows():
 
@@ -80,14 +83,13 @@ with tabs[2]:
 
             absent_this_month = old[
                 (old["Name"]==name) &
-                (pd.to_datetime(old["Date"], errors="coerce").dt.month==current_month) &
+                (old["Month"]==month) &
                 (old["Status"]=="Absent")
             ].shape[0]
 
             if absent_this_month >= 3:
 
                 st.write(f"🚫 {name} - Ntibemerewe kuririmba (Absent ≥3)")
-
                 continue
 
             col1,col2 = st.columns([3,3])
@@ -113,6 +115,7 @@ with tabs[2]:
 
             attendance_list.append({
                 "Name":name,
+                "Month":month,
                 "Day":day,
                 "Status":status,
                 "Date":date_str
@@ -138,6 +141,7 @@ with tabs[2]:
             st.success("Attendance yabitswe neza!")
 
     except:
+
         st.warning("members.csv ntiyabonetse.")
 
 
@@ -158,9 +162,9 @@ with tabs[3]:
 
     amount = st.number_input("Amafaranga", min_value=0)
 
-    today = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    today = datetime.now().strftime("%Y-%m-%d")
 
-    if st.button("Bika Umusanzu"):
+    if st.button("Save Umusanzu"):
 
         new = pd.DataFrame({
             "Name":[name],
@@ -190,8 +194,6 @@ with tabs[4]:
 
         attendance = pd.read_csv("attendance.csv")
 
-        attendance["Date"] = pd.to_datetime(attendance["Date"], errors="coerce")
-
         month = st.selectbox(
             "Hitamo Ukwezi",
             ["All","January","February","March","April","May","June",
@@ -208,20 +210,20 @@ with tabs[4]:
         filtered = attendance.copy()
 
         if month != "All":
-
-            month_number = [
-            "January","February","March","April","May","June",
-            "July","August","September","October","November","December"
-            ].index(month)+1
-
-            filtered = filtered[filtered["Date"].dt.month == month_number]
+            filtered = filtered[filtered["Month"] == month]
 
         if day != "All":
             filtered = filtered[filtered["Day"] == day]
 
-        filtered = filtered[filtered["Date"].dt.date == date]
+        filtered = filtered[filtered["Date"] == str(date)]
 
         st.dataframe(filtered)
+
+        st.subheader("Summary")
+
+        summary = filtered.groupby("Status").size()
+
+        st.write(summary)
 
     except:
 
@@ -241,7 +243,7 @@ with tabs[5]:
 
         if contribution_name:
 
-            filtered = df[df["Contribution"]==contribution_name]
+            filtered = df[df["Contribution"] == contribution_name]
 
             st.dataframe(filtered)
 
@@ -265,18 +267,16 @@ with tabs[6]:
 
         attendance = pd.read_csv("attendance.csv")
 
-        attendance["Date"] = pd.to_datetime(attendance["Date"], errors="coerce")
-
-        month = datetime.now().month
+        month = datetime.now().strftime("%B")
 
         absent = attendance[
-            (attendance["Status"]=="Absent") &
-            (attendance["Date"].dt.month==month)
+            (attendance["Month"] == month) &
+            (attendance["Status"] == "Absent")
         ]
 
         banned = absent.groupby("Name").size().reset_index(name="Absent")
 
-        banned = banned[banned["Absent"]>=3]
+        banned = banned[banned["Absent"] >= 3]
 
         if banned.empty:
 
