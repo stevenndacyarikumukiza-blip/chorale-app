@@ -1,46 +1,66 @@
+# app.py
 import streamlit as st
 import pandas as pd
 from datetime import datetime
 
+# ---------------- PAGE SETUP ----------------
 st.set_page_config(page_title="Chorale Inshuti za Yesu", layout="wide")
 
 st.title("🎵 CHORALE INSHUTI ZA YESU")
 
-menu = st.sidebar.selectbox(
-    "Menu",
-    ["Ahabanza", "Abaririmbyi", "Attendance", "Umusanzu", "Raporo Attendance", "Raporo Umusanzu"]
-)
+# ---------------- HEADER TABS ----------------
+tabs = st.tabs([
+    "🏠 Ahabanza",
+    "👥 Abaririmbyi",
+    "📋 Attendance",
+    "💰 Umusanzu",
+    "📊 Raporo Attendance",
+    "📊 Raporo Umusanzu"
+])
 
 # ---------------- HOME ----------------
-if menu == "Ahabanza":
+with tabs[0]:
+
     st.header("Murakaza neza muri Chorale Inshuti za Yesu")
-    st.write("Iminsi y’imyitozo: Ku wa Gatatu, Ku wa Gatandatu, Ku Cyumweru")
+
+    st.write("Iminsi y’imyitozo:")
+    st.write("• Ku wa Gatatu")
+    st.write("• Ku wa Gatandatu")
+    st.write("• Ku Cyumweru")
 
 # ---------------- MEMBERS ----------------
-elif menu == "Abaririmbyi":
+with tabs[1]:
+
     st.header("👥 Abaririmbyi")
+
     try:
-        df = pd.read_csv("members.csv")
-        st.dataframe(df)
-        st.info(f"Umubare w'Abaririmbyi: {len(df)}")
+        members = pd.read_csv("members.csv")
+
+        st.dataframe(members)
+
+        st.info(f"Umubare w'Abaririmbyi: {len(members)}")
+
     except:
-        st.warning("Nta baririmbyi babonetse.")
+        st.warning("⚠️ Nta baririmbyi babonetse. Shyira members.csv")
 
 # ---------------- ATTENDANCE ----------------
-elif menu == "Attendance":
+with tabs[2]:
 
     st.header("📋 Shyira Attendance")
 
     day = st.selectbox(
         "📅 Hitamo Umunsi w’Imyitozo",
-        ["Wednesday", "Saturday", "Sunday"]
+        ["Wednesday","Saturday","Sunday"]
     )
 
     try:
+
         members = pd.read_csv("members.csv")
 
         if members.empty:
-            st.warning("Nta baririmbyi babonetse.")
+
+            st.warning("⚠️ Urutonde rw'Abaririmbyi ntirubonetse")
+
         else:
 
             attendance_list = []
@@ -71,7 +91,9 @@ elif menu == "Attendance":
                 ].shape[0]
 
                 if absent_this_month >= 3:
+
                     st.write(f"🚫 {name} - Ntibemerewe kuririmba (Absent ≥3)")
+
                     continue
 
                 col1,col2 = st.columns([3,3])
@@ -80,6 +102,7 @@ elif menu == "Attendance":
                     st.write("👤", name)
 
                 with col2:
+
                     status = st.radio(
                         "Status",
                         ["Present","Absent","Uruhushya"],
@@ -89,8 +112,10 @@ elif menu == "Attendance":
 
                 if status == "Present":
                     present_count += 1
+
                 elif status == "Absent":
                     absent_count += 1
+
                 else:
                     uruhushya_count += 1
 
@@ -106,8 +131,11 @@ elif menu == "Attendance":
             col1,col2,col3,col4 = st.columns(4)
 
             col1.metric("Abaririmbyi bose", total_members)
+
             col2.metric("Bari Present (Bitabiriye)", present_count)
+
             col3.metric("Bari Absent (Basibye)", absent_count)
+
             col4.metric("Basabye Uruhushya", uruhushya_count)
 
             if st.button("💾 Save Attendance"):
@@ -118,95 +146,107 @@ elif menu == "Attendance":
 
                 data.to_csv("attendance.csv", index=False)
 
-                st.success("Attendance yabitswe neza!")
+                st.success("✅ Attendance yabitswe neza!")
 
     except:
-        st.warning("members.csv ntiyabonetse.")
+
+        st.warning("⚠️ members.csv ntiyabonetse")
 
 # ---------------- CONTRIBUTION ----------------
-elif menu == "Umusanzu":
+with tabs[3]:
 
     st.header("💰 Umusanzu")
 
-    name = st.text_input("Izina")
+    name = st.text_input("Izina ry'umuririmbyi")
 
     contribution_name = st.text_input("Izina ry'umusanzu (Urugero: Impuzankano)")
 
     month = st.selectbox(
         "Ukwezi",
-        ["January","February","March","April","May","June","July","August","September","October","November","December"]
+        ["January","February","March","April","May","June",
+         "July","August","September","October","November","December"]
     )
 
     amount = st.number_input("Amafaranga", min_value=0)
 
-    today = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    date_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-    if st.button("Save Umusanzu"):
+    if st.button("💾 Save Umusanzu"):
 
         new = pd.DataFrame({
             "Name":[name],
             "Contribution":[contribution_name],
             "Month":[month],
             "Amount":[amount],
-            "Date":[today]
+            "Date":[date_str]
         })
 
         try:
             old = pd.read_csv("contribution.csv")
+
             new = pd.concat([old,new], ignore_index=True)
+
         except:
             pass
 
         new.to_csv("contribution.csv", index=False)
 
-        st.success("Umusanzu wabitswe neza!")
+        st.success("✅ Umusanzu wabitswe neza!")
 
-# ---------------- RAPORO ATTENDANCE ----------------
-elif menu == "Raporo Attendance":
+# ---------------- ATTENDANCE REPORT ----------------
+with tabs[4]:
 
     st.header("📊 Raporo ya Attendance")
 
     try:
+
         attendance = pd.read_csv("attendance.csv")
 
         if attendance.empty:
-            st.info("Nta data ihari.")
+
+            st.info("Nta data ya attendance ihari")
+
         else:
 
             attendance["Date"] = pd.to_datetime(attendance["Date"], errors="coerce")
 
-            day = st.selectbox(
-                "Umunsi",
+            day_filter = st.selectbox(
+                "Hitamo Umunsi",
                 ["All","Wednesday","Saturday","Sunday"]
             )
 
             filtered = attendance.copy()
 
-            if day != "All":
-                filtered = filtered[filtered["Day"]==day]
+            if day_filter != "All":
+                filtered = filtered[filtered["Day"] == day_filter]
 
             st.dataframe(filtered)
 
-            summary = filtered.groupby(["Status"]).size()
-
             st.subheader("Summary")
+
+            summary = filtered.groupby("Status").size()
 
             st.write(summary)
 
     except:
-        st.warning("attendance.csv ntiyabonetse.")
 
-# ---------------- RAPORO CONTRIBUTION ----------------
-elif menu == "Raporo Umusanzu":
+        st.warning("⚠️ attendance.csv ntiyabonetse")
+
+# ---------------- CONTRIBUTION REPORT ----------------
+with tabs[5]:
 
     st.header("📊 Raporo y'Umusanzu")
 
     try:
+
         df = pd.read_csv("contribution.csv")
 
         if df.empty:
-            st.info("Nta musanzu wabonetse.")
+
+            st.info("Nta musanzu wabonetse")
+
         else:
+
             st.dataframe(df)
 
             total = df["Amount"].sum()
@@ -214,4 +254,5 @@ elif menu == "Raporo Umusanzu":
             st.metric("Umusanzu wose", total)
 
     except:
-        st.warning("contribution.csv ntiyabonetse.")
+
+        st.warning("⚠️ contribution.csv ntiyabonetse")
