@@ -1,14 +1,11 @@
-# app.py
 import streamlit as st
 import pandas as pd
 from datetime import datetime
 
-# ---------------- PAGE SETUP ----------------
 st.set_page_config(page_title="Chorale Inshuti za Yesu", layout="wide")
 
 st.title("🎵 CHORALE INSHUTI ZA YESU")
 
-# ---------------- HEADER TABS ----------------
 tabs = st.tabs([
     "🏠 Ahabanza",
     "👥 Abaririmbyi",
@@ -28,6 +25,63 @@ with tabs[0]:
     st.write("• Ku wa Gatandatu")
     st.write("• Ku Cyumweru")
 
+    st.divider()
+
+    st.header("📖 Amateka ya Chorale")
+
+    st.write("""
+Chorale Inshuti za Yesu ni chorale ikorera umurimo w’Imana mu itorero rya ADEPR Kinyinya Paruwasi.
+
+Yatangiriye mu mwaka wa 2021 mu kwezi kwa mbere aho abaririmbyi 35 bahuriraga hamwe na worship team yaho.
+
+Abari bagize chorale icyo gihe:
+
+Abagabo: 5  
+Abagore: 5  
+Abasore: 10  
+Abakobwa: 15
+""")
+
+    st.write("""
+Mu mwaka wa 2022 chorale yaguze impuzankano (uniform) ya mbere kandi yatangiye gukora umurimo
+wo kuramya no guhimbaza Imana mu bitaramo n’iteraniro.
+""")
+
+    st.write("""
+Ibikorwa by’ingenzi bya Chorale:
+
+12/2022: Igiterane cya mbere twatumiye Chorale Seeking for Jesus
+
+Nyuma y’icyo giterane twafunguye YouTube Channel yitwa:
+"Inshuti za Yesu Choir Kinyinya"
+
+Ubu dufite indirimbo imwe yitwa "Ikinyita".
+""")
+
+    st.write("""
+Umubano n’izindi chorale:
+
+Chorale Seeking for Jesus  
+Chorale Abatwaramucyo  
+Chorale Future  
+Chorale Ebenezer  
+Chorale Elayo  
+Chorale Bonheur  
+Goshen Choir Kabagari
+""")
+
+    st.write("""
+Ibyuma by’umuziki:
+
+06/2023: Umushinga wo kugura ibyuma by’umuziki warangiye
+
+16/03/2024: Chorale yabonye Guitar Bass yayo bwite
+
+01/04/2024: Chorale yaguze ibyuma byose by’umuziki
+""")
+
+    st.write("14/03/2024: Urugendo rwa mbere rw’ivugabutumwa rwabereye Kacyiru Kabagari.")
+
 # ---------------- MEMBERS ----------------
 with tabs[1]:
 
@@ -41,7 +95,7 @@ with tabs[1]:
         st.info(f"Umubare w'Abaririmbyi: {len(members)}")
 
     except:
-        st.warning("⚠️ Nta baririmbyi babonetse. Shyira members.csv")
+        st.warning("Nta baririmbyi babonetse.")
 
 # ---------------- ATTENDANCE ----------------
 with tabs[2]:
@@ -49,7 +103,7 @@ with tabs[2]:
     st.header("📋 Shyira Attendance")
 
     day = st.selectbox(
-        "📅 Hitamo Umunsi w’Imyitozo",
+        "Hitamo Umunsi w'Imyitozo",
         ["Wednesday","Saturday","Sunday"]
     )
 
@@ -59,7 +113,7 @@ with tabs[2]:
 
         if members.empty:
 
-            st.warning("⚠️ Urutonde rw'Abaririmbyi ntirubonetse")
+            st.warning("Nta baririmbyi babonetse.")
 
         else:
 
@@ -91,9 +145,7 @@ with tabs[2]:
                 ].shape[0]
 
                 if absent_this_month >= 3:
-
                     st.write(f"🚫 {name} - Ntibemerewe kuririmba (Absent ≥3)")
-
                     continue
 
                 col1,col2 = st.columns([3,3])
@@ -102,7 +154,6 @@ with tabs[2]:
                     st.write("👤", name)
 
                 with col2:
-
                     status = st.radio(
                         "Status",
                         ["Present","Absent","Uruhushya"],
@@ -112,10 +163,8 @@ with tabs[2]:
 
                 if status == "Present":
                     present_count += 1
-
                 elif status == "Absent":
                     absent_count += 1
-
                 else:
                     uruhushya_count += 1
 
@@ -128,17 +177,14 @@ with tabs[2]:
 
             st.divider()
 
-            col1,col2,col3,col4 = st.columns(4)
+            c1,c2,c3,c4 = st.columns(4)
 
-            col1.metric("Abaririmbyi bose", total_members)
+            c1.metric("Abaririmbyi bose", total_members)
+            c2.metric("Bari Present (Bitabiriye)", present_count)
+            c3.metric("Bari Absent (Basibye)", absent_count)
+            c4.metric("Basabye Uruhushya", uruhushya_count)
 
-            col2.metric("Bari Present (Bitabiriye)", present_count)
-
-            col3.metric("Bari Absent (Basibye)", absent_count)
-
-            col4.metric("Basabye Uruhushya", uruhushya_count)
-
-            if st.button("💾 Save Attendance"):
+            if st.button("Save Attendance"):
 
                 new = pd.DataFrame(attendance_list)
 
@@ -146,32 +192,30 @@ with tabs[2]:
 
                 data.to_csv("attendance.csv", index=False)
 
-                st.success("✅ Attendance yabitswe neza!")
+                st.success("Attendance yabitswe neza!")
 
     except:
-
-        st.warning("⚠️ members.csv ntiyabonetse")
+        st.warning("members.csv ntiyabonetse.")
 
 # ---------------- CONTRIBUTION ----------------
 with tabs[3]:
 
     st.header("💰 Umusanzu")
 
-    name = st.text_input("Izina ry'umuririmbyi")
+    name = st.text_input("Izina")
 
     contribution_name = st.text_input("Izina ry'umusanzu (Urugero: Impuzankano)")
 
     month = st.selectbox(
         "Ukwezi",
-        ["January","February","March","April","May","June",
-         "July","August","September","October","November","December"]
+        ["January","February","March","April","May","June","July","August","September","October","November","December"]
     )
 
     amount = st.number_input("Amafaranga", min_value=0)
 
     date_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-    if st.button("💾 Save Umusanzu"):
+    if st.button("Save Umusanzu"):
 
         new = pd.DataFrame({
             "Name":[name],
@@ -183,17 +227,15 @@ with tabs[3]:
 
         try:
             old = pd.read_csv("contribution.csv")
-
             new = pd.concat([old,new], ignore_index=True)
-
         except:
             pass
 
         new.to_csv("contribution.csv", index=False)
 
-        st.success("✅ Umusanzu wabitswe neza!")
+        st.success("Umusanzu wabitswe neza!")
 
-# ---------------- ATTENDANCE REPORT ----------------
+# ---------------- RAPORO ATTENDANCE ----------------
 with tabs[4]:
 
     st.header("📊 Raporo ya Attendance")
@@ -202,37 +244,37 @@ with tabs[4]:
 
         attendance = pd.read_csv("attendance.csv")
 
-        if attendance.empty:
+        attendance["Date"] = pd.to_datetime(attendance["Date"], errors="coerce")
 
-            st.info("Nta data ya attendance ihari")
+        month = st.selectbox(
+            "Hitamo Ukwezi",
+            ["All","January","February","March","April","May","June","July","August","September","October","November","December"]
+        )
 
-        else:
+        day = st.selectbox(
+            "Hitamo Umunsi",
+            ["All","Wednesday","Saturday","Sunday"]
+        )
 
-            attendance["Date"] = pd.to_datetime(attendance["Date"], errors="coerce")
+        date_filter = st.date_input("Hitamo Itariki")
 
-            day_filter = st.selectbox(
-                "Hitamo Umunsi",
-                ["All","Wednesday","Saturday","Sunday"]
-            )
+        filtered = attendance.copy()
 
-            filtered = attendance.copy()
+        if month != "All":
+            month_number = ["January","February","March","April","May","June","July","August","September","October","November","December"].index(month)+1
+            filtered = filtered[filtered["Date"].dt.month == month_number]
 
-            if day_filter != "All":
-                filtered = filtered[filtered["Day"] == day_filter]
+        if day != "All":
+            filtered = filtered[filtered["Day"] == day]
 
-            st.dataframe(filtered)
+        filtered = filtered[filtered["Date"].dt.date == date_filter]
 
-            st.subheader("Summary")
-
-            summary = filtered.groupby("Status").size()
-
-            st.write(summary)
+        st.dataframe(filtered)
 
     except:
+        st.warning("attendance.csv ntiyabonetse")
 
-        st.warning("⚠️ attendance.csv ntiyabonetse")
-
-# ---------------- CONTRIBUTION REPORT ----------------
+# ---------------- RAPORO UMUSANZU ----------------
 with tabs[5]:
 
     st.header("📊 Raporo y'Umusanzu")
@@ -241,18 +283,22 @@ with tabs[5]:
 
         df = pd.read_csv("contribution.csv")
 
-        if df.empty:
+        month = st.selectbox(
+            "Hitamo Ukwezi",
+            ["All","January","February","March","April","May","June","July","August","September","October","November","December"]
+        )
 
-            st.info("Nta musanzu wabonetse")
+        contribution_name = st.text_input("Izina ry'umusanzu ushaka kureba")
 
-        else:
+        filtered = df.copy()
 
-            st.dataframe(df)
+        if month != "All":
+            filtered = filtered[filtered["Month"] == month]
 
-            total = df["Amount"].sum()
+        if contribution_name:
+            filtered = filtered[filtered["Contribution"] == contribution_name]
 
-            st.metric("Umusanzu wose", total)
+        st.dataframe(filtered)
 
     except:
-
-        st.warning("⚠️ contribution.csv ntiyabonetse")
+        st.warning("contribution.csv ntiyabonetse")
