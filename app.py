@@ -6,14 +6,19 @@ from datetime import datetime, date
 # ----------------- Page Setup -----------------
 st.set_page_config(page_title="Chorale Inshuti za Yesu", layout="wide")
 
+# ----------------- Header Title -----------------
 st.markdown("<h1 style='text-align: center; color: #4B0082;'>🎵 CHORALE INSHUTI ZA YESU</h1>", unsafe_allow_html=True)
 
-# ----------------- Header Navigation (Tabs) -----------------
-tabs = st.tabs(["Ahabanza", "Abaririmbyi", "Attendance", "Umusanzu",
-                "Raporo Attendance", "Raporo Umusanzu", "Abatemewe kuririmba"])
+# ----------------- Header Navigation -----------------
+page = st.radio(
+    "Navigate",
+    ["Ahabanza", "Abaririmbyi", "Attendance", "Umusanzu",
+     "Raporo Attendance", "Raporo Umusanzu", "Abatemewe kuririmba"],
+    horizontal=True
+)
 
 # ----------------- HOME -----------------
-with tabs[0]:
+if page == "Ahabanza":
     st.header("Murakaza neza muri Chorale Inshuti za Yesu")
     st.write("Iminsi y’imyitozo: Ku wa Gatatu, Ku wa Gatandatu, Ku Cyumweru")
     st.divider()
@@ -30,7 +35,7 @@ Yatangiriye mu mwaka wa 2021, ubwo abaririmbyi 35 bahuriraga hamwe na worship te
     st.markdown("[▶️ Reba indirimbo zacu kuri YouTube](https://www.youtube.com/channel/YOUR_CHANNEL_LINK_HERE)")
 
 # ----------------- MEMBERS -----------------
-with tabs[1]:
+elif page == "Abaririmbyi":
     st.header("👥 Abaririmbyi")
     try:
         df = pd.read_csv("members.csv")
@@ -40,7 +45,7 @@ with tabs[1]:
         st.warning("Nta baririmbyi babonetse.")
 
 # ----------------- ATTENDANCE -----------------
-with tabs[2]:
+elif page == "Attendance":
     st.header("📋 Shyira Attendance")
     month = st.selectbox(
         "📅 Hitamo Ukwezi",
@@ -120,7 +125,7 @@ with tabs[2]:
         st.warning("members.csv ntiyabonetse.")
 
 # ----------------- CONTRIBUTION -----------------
-with tabs[3]:
+elif page == "Umusanzu":
     st.header("💰 Umusanzu")
     name = st.text_input("Izina")
     contribution_name = st.text_input("Izina ry'umusanzu (Urugero: Impuzankano)")
@@ -148,7 +153,7 @@ with tabs[3]:
         st.success("Umusanzu wabitswe neza!")
 
 # ----------------- RAPORO ATTENDANCE -----------------
-with tabs[4]:
+elif page == "Raporo Attendance":
     st.header("📊 Raporo ya Attendance")
     try:
         attendance = pd.read_csv("attendance.csv")
@@ -163,7 +168,6 @@ with tabs[4]:
                  "July","August","September","October","November","December"]
             )
             date_filter = st.date_input("Hitamo Itariki (optionnel)", value=None)
-
             filtered = attendance.copy()
             if day_filter!="All":
                 filtered = filtered[filtered["Day"]==day_filter]
@@ -173,7 +177,6 @@ with tabs[4]:
                 filtered = filtered[filtered["Date"].dt.month==month_number]
             if date_filter:
                 filtered = filtered[filtered["Date"].dt.date==date_filter]
-
             if filtered.empty:
                 st.warning("Nta attendance yabonetse kuri aya ma filters.")
             else:
@@ -181,7 +184,7 @@ with tabs[4]:
                 st.dataframe(filtered)
 
 # ----------------- RAPORO UMUSANZU -----------------
-with tabs[5]:
+elif page == "Raporo Umusanzu":
     st.header("📊 Raporo y'Umusanzu")
     try:
         contribution = pd.read_csv("contribution.csv")
@@ -201,7 +204,7 @@ with tabs[5]:
                 st.metric("Umusanzu wose", filtered["Amount"].sum())
 
 # ----------------- ABATEMEWE KURIRIMBA -----------------
-with tabs[6]:
+elif page == "Abatemewe kuririmba":
     st.header("🚫 Abatemewe Kuririmba")
     try:
         attendance = pd.read_csv("attendance.csv")
