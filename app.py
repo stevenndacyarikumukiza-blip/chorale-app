@@ -117,7 +117,7 @@ with selected_tab[3]:
     st.header("💰 Umusanzu")
     name = st.text_input("Izina")
     contribution_name = st.text_input("Izina ry'umusanzu (Urugero: Impuzankano)")
-    month = st.selectbox("Ukwezi", ["January","February","March","April","May","June",
+    month = st.selectbox("Month", ["January","February","March","April","May","June",
                                     "July","August","September","October","November","December"])
     amount = st.number_input("Amafaranga", min_value=0)
     date_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -210,4 +210,5 @@ with selected_tab[6]:
             st.success("Nta baririmbyi bafite absent ≥3 uyu kwezi.")
     except:
         st.warning("attendance.csv ntiyabonetse.")
+
 
