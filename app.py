@@ -180,13 +180,14 @@ with tabs[3]:
 
     st.header("💰 Umusanzu")
 
+    # Izina ry'umusanzu wandika (text input)
     name = st.text_input("Izina")
     contribution = st.text_input("Ubwoko bw'umusanzu")
     month = st.selectbox("Ukwezi", ["January","February","March","April","May","June",
                                    "July","August","September","October","November","December"])
     amount = st.number_input("Amafaranga", min_value=0)
 
-    if st.button("Save"):
+    if st.button("💾 Save Umusanzu"):
 
         new = pd.DataFrame({
             "Name":[name],
@@ -202,24 +203,46 @@ with tabs[3]:
 
         new.to_csv(CONTRIBUTION_FILE, index=False)
 
-        st.success("Saved!")
+        # ✅ Message yagaragaza izina wanditse
+        st.success(f"Umusanzu wa {name} wabitswe neza!")
 
-# ---------------- RAPORO CONTRIBUTION ----------------
+# ---------------- RAPORO UMUSANZU ----------------
 with tabs[5]:
-
     st.header("📊 Raporo Umusanzu")
-
+    
     if os.path.exists(CONTRIBUTION_FILE):
-
         df = pd.read_csv(CONTRIBUTION_FILE)
         df["Date"] = pd.to_datetime(df["Date"], errors="coerce")
 
-        st.dataframe(df)
-        st.metric("Total", df["Amount"].sum())
+        # ---------------- NAME DROPDOWN ----------------
+        if os.path.exists(MEMBERS_FILE):
+            members_df = pd.read_csv(MEMBERS_FILE)
+            name_filter = st.selectbox(
+                "Hitamo izina ry'umusanzu",
+                ["All"] + members_df["Name"].dropna().unique().tolist()
+            )
+        else:
+            name_filter = "All"
 
+        filtered = df.copy()
+        if name_filter != "All":
+            filtered = filtered[filtered["Name"] == name_filter]
+
+        # ---------------- CONTRIBUTION TYPE DROPDOWN ----------------
+        contribution_types = ["All"] + filtered["Contribution"].dropna().unique().tolist()
+        contribution_filter = st.selectbox("Hitamo ubwoko bw'umusanzu", contribution_types)
+        if contribution_filter != "All":
+            filtered = filtered[filtered["Contribution"] == contribution_filter]
+
+        # ---------------- DISPLAY RESULTS ----------------
+        if filtered.empty:
+            st.warning("Nta data ihari kuri iyo filter.")
+        else:
+            st.subheader("Filtered Contributions")
+            st.dataframe(filtered)
+            st.metric("Total", filtered["Amount"].sum())
     else:
         st.warning("Nta data ihari.")
-
 # ---------------- ABATAREMEWE ----------------
 with tabs[6]:
 
