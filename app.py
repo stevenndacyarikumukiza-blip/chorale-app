@@ -2,22 +2,20 @@ import streamlit as st
 import pandas as pd
 import sqlite3
 from datetime import datetime, date
+import os
 
 # ---------------- CONFIG ----------------
 st.set_page_config(page_title="Chorale Inshuti za Yesu", layout="wide")
 st.title("🎵 CHORALE INSHUTI ZA YESU")
 
+# ---------------- FILE ----------------
+MEMBERS_FILE = "members.csv"
+
 # ---------------- DATABASE ----------------
 conn = sqlite3.connect("chorale.db", check_same_thread=False)
 c = conn.cursor()
 
-# Create tables
-c.execute("""
-CREATE TABLE IF NOT EXISTS members (
-    Name TEXT
-)
-""")
-
+# Tables
 c.execute("""
 CREATE TABLE IF NOT EXISTS attendance (
     Name TEXT,
@@ -39,13 +37,16 @@ CREATE TABLE IF NOT EXISTS contribution (
 
 conn.commit()
 
-# ---------------- FUNCTIONS ----------------
+# ---------------- LOAD MEMBERS ----------------
+def load_members():
+    if os.path.exists(MEMBERS_FILE):
+        df = pd.read_csv(MEMBERS_FILE)
+        return df
+    else:
+        return pd.DataFrame()
+
 def load_table(table):
     return pd.read_sql(f"SELECT * FROM {table}", conn)
-
-def insert_member(name):
-    c.execute("INSERT INTO members VALUES (?)", (name,))
-    conn.commit()
 
 def insert_attendance(data):
     c.executemany("INSERT INTO attendance VALUES (?,?,?,?)", data)
@@ -76,20 +77,19 @@ with tabs[0]:
 with tabs[1]:
     st.header("👥 Abaririmbyi")
 
-    name = st.text_input("Shyiramo izina")
-    if st.button("➕ Add Member"):
-        if name:
-            insert_member(name)
-            st.success("Yongeweho neza!")
+    members = load_members()
 
-    df = load_table("members")
-    st.dataframe(df)
+    if members.empty:
+        st.error("members.csv ntiboneka cyangwa irimo ubusa")
+    else:
+        st.dataframe(members)
+        st.info(f"Abari muri chorale: {len(members)}")
 
 # ---------------- ATTENDANCE ----------------
 with tabs[2]:
     st.header("📋 Attendance")
 
-    members = load_table("members")
+    members = load_members()
 
     if members.empty:
         st.warning("Nta members ihari")
@@ -103,8 +103,8 @@ with tabs[2]:
 
         for i, row in members.iterrows():
             name = row["Name"]
-            col1, col2 = st.columns([3,3])
 
+            col1, col2 = st.columns([3,3])
             with col1:
                 st.write(name)
 
@@ -132,7 +132,13 @@ with tabs[2]:
 with tabs[3]:
     st.header("💰 Umusanzu")
 
-    name = st.text_input("Izina")
+    members = load_members()
+
+    if not members.empty:
+        name = st.selectbox("Izina", members["Name"])
+    else:
+        name = st.text_input("Izina")
+
     contribution = st.text_input("Ubwoko bw'umusanzu")
     month = st.selectbox("Ukwezi", [
         "January","February","March","April","May","June",
